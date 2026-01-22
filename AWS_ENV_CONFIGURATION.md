@@ -12,7 +12,7 @@ LOG_LEVEL=info
 
 # Database Configuration
 DB_HOST=elimucore-db.xxxxx.us-east-1.rds.amazonaws.com
-DB_PORT=3306
+DB_PORT=5432
 DB_NAME=elimucore_prod
 DB_USER=elimucore_app
 DB_PASSWORD=your_secure_password_here
