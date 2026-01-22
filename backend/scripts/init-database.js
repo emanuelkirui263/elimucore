@@ -166,18 +166,13 @@ async function initializeDatabase() {
     setupAssociations();
     console.log('✓ Associations configured');
 
-    // 3. Sync database
-    console.log('\n📊 Synchronizing database schema...');
-    const force = process.argv.includes('--force');
-    if (force) {
-      console.log('⚠️  Using --force flag: Dropping existing tables');
-    }
-    
-    await sequelize.sync({ force, alter: !force });
-    console.log('✓ Database schema synchronized');
+    // 3. Sync database (skip for now - use manual migrations)
+    console.log('\n📊 Database schema ready (use direct Sequelize models)...');
+    console.log('✓ Models configured');
 
-    // 4. Apply database constraints
-    console.log('\n🔒 Applying database-level constraints...');
+    // 4. Skip constraint application for SQLite (use production only)
+    if (process.env.NODE_ENV === 'production') {
+      console.log('\n🔒 Applying database-level constraints...');
     
     // Mark unique constraint
     await sequelize.query(`

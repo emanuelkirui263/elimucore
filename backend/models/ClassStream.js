@@ -9,22 +9,6 @@ module.exports = (sequelize) => {
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
       },
-      schoolId: {
-        type: DataTypes.UUID,
-        allowNull: false,
-        references: {
-          model: 'Schools',
-          key: 'id',
-        },
-      },
-      academicYearId: {
-        type: DataTypes.UUID,
-        allowNull: false,
-        references: {
-          model: 'academic_years',
-          key: 'id',
-        },
-      },
       classLevel: {
         type: DataTypes.ENUM('FORM_1', 'FORM_2', 'FORM_3', 'FORM_4'),
         allowNull: false,
@@ -48,10 +32,6 @@ module.exports = (sequelize) => {
       classTeacherId: {
         type: DataTypes.UUID,
         allowNull: true,
-        references: {
-          model: 'Users',
-          key: 'id',
-        },
         comment: 'Form teacher',
       },
       status: {
@@ -61,10 +41,6 @@ module.exports = (sequelize) => {
       createdBy: {
         type: DataTypes.UUID,
         allowNull: false,
-        references: {
-          model: 'Users',
-          key: 'id',
-        },
       },
       createdAt: {
         type: DataTypes.DATE,

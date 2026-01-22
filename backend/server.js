@@ -208,10 +208,13 @@ async function startServer() {
     await sequelize.authenticate();
     console.log('Database connection established');
 
-    // Only sync models in production
+    // For development with SQLite: skip sync as tables have association conflicts
+    // Tables will be created on first use or manually via npm run db:init
     if (process.env.NODE_ENV === 'production') {
       await sequelize.sync({ alter: false });
       console.log('Database models synchronized');
+    } else {
+      console.log('Development mode: skipping auto-sync (use explicit migration scripts)');
     }
 
     app.listen(PORT, () => {

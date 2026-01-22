@@ -87,19 +87,11 @@ const Student = sequelize.define(
     academicYearId: {
       type: DataTypes.UUID,
       allowNull: true,
-      references: {
-        model: 'academic_years',
-        key: 'id',
-      },
       comment: 'Current academic year',
     },
     classStreamId: {
       type: DataTypes.UUID,
       allowNull: true,
-      references: {
-        model: 'ClassStreams',
-        key: 'id',
-      },
     },
     isTransferred: {
       type: DataTypes.BOOLEAN,
