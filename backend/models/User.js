@@ -65,10 +65,6 @@ const User = sequelize.define(
       type: DataTypes.DATE,
       allowNull: true,
     },
-    schoolId: {
-      type: DataTypes.UUID,
-      allowNull: true,
-    },
   },
   {
     tableName: 'users',

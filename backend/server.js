@@ -19,16 +19,18 @@ const StudentAccount = require('./models/StudentAccount');
 const Payment = require('./models/Payment');
 const Attendance = require('./models/Attendance');
 const AuditLog = require('./models/AuditLog');
-const AcademicYear = require('./models/AcademicYear');
-const Term = require('./models/Term');
-const ClassStream = require('./models/ClassStream');
-const StudentTransfer = require('./models/StudentTransfer');
-const DisciplineCase = require('./models/DisciplineCase');
-const Timetable = require('./models/Timetable');
-const Book = require('./models/Book');
-const BookIssue = require('./models/BookIssue');
-const StudentSubjectEnrollment = require('./models/StudentSubjectEnrollment');
-const StudentProgression = require('./models/StudentProgression');
+
+// Initialize factory pattern models
+const AcademicYear = require('./models/AcademicYear')(sequelize);
+const Term = require('./models/Term')(sequelize);
+const ClassStream = require('./models/ClassStream')(sequelize);
+const StudentTransfer = require('./models/StudentTransfer')(sequelize);
+const DisciplineCase = require('./models/DisciplineCase')(sequelize);
+const Timetable = require('./models/Timetable')(sequelize);
+const Book = require('./models/Book')(sequelize);
+const BookIssue = require('./models/BookIssue')(sequelize);
+const StudentSubjectEnrollment = require('./models/StudentSubjectEnrollment')(sequelize);
+const StudentProgression = require('./models/StudentProgression')(sequelize);
 
 // Import routes
 const authRoutes = require('./routes/auth');
@@ -206,8 +208,11 @@ async function startServer() {
     await sequelize.authenticate();
     console.log('Database connection established');
 
-    await sequelize.sync({ alter: process.env.NODE_ENV === 'development' });
-    console.log('Database models synchronized');
+    // Only sync models in production
+    if (process.env.NODE_ENV === 'production') {
+      await sequelize.sync({ alter: false });
+      console.log('Database models synchronized');
+    }
 
     app.listen(PORT, () => {
       console.log(`🚀 ELIMUCORE Server running on port ${PORT}`);
