@@ -37,14 +37,11 @@ async function seedDatabase() {
       name: 'ELIMUCORE Demo High School',
       registrationNumber: 'REG/2025/001',
       county: 'Nairobi',
-      subCounty: 'Nairobi',
+      subcounty: 'Nairobi',
       address: '123 Education Lane, Nairobi',
-      phoneNumber: '+254712345678',
+      phone: '+254712345678',
       email: 'admin@elimucore-demo.edu.ke',
       principalName: 'Dr. John Kamau',
-      vice_principal: 'Mrs. Jane Mwangi',
-      totalStudents: 500,
-      totalStaff: 45,
     });
     console.log('✓ School created:', school.name);
 

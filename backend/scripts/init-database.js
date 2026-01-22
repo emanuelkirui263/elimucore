@@ -32,97 +32,97 @@ const BookIssue = require('../models/BookIssue')(sequelize);
 const StudentSubjectEnrollment = require('../models/StudentSubjectEnrollment')(sequelize);
 const StudentProgression = require('../models/StudentProgression')(sequelize);
 
-// Define all associations
-function setupAssociations() {
-  // Mark associations
-  Mark.belongsTo(Exam);
-  Mark.belongsTo(Subject);
-  Mark.belongsTo(Student);
-  Exam.hasMany(Mark);
-  Subject.hasMany(Mark);
-  Student.hasMany(Mark);
+async function initializeDatabase() {
+  try {
+    console.log('\n🔧 ELIMUCORE Database Initialization');
+    console.log('='.repeat(50));
 
-  // Account associations
-  StudentAccount.belongsTo(Student);
-  Student.hasOne(StudentAccount);
+    // 1. Test connection
+    console.log('\n📡 Testing database connection...');
+    await sequelize.authenticate();
+    console.log('✓ Database connection successful');
 
-  // Payment associations
-  Payment.belongsTo(Student);
-  Student.hasMany(Payment);
+    // 2. Setup associations
+    console.log('\n🔗 Setting up model associations...');
+    setupAssociations();
+    console.log('✓ Associations configured');
 
-  // Attendance associations
-  Attendance.belongsTo(Student);
-  Student.hasMany(Attendance);
+    // 3. Sync database (create tables if not exist)
+    console.log('\n📊 Syncing database schema...');
+    await sequelize.sync({ alter: true });
+    console.log('✓ Models synced');
 
-  // School associations
-  School.hasMany(User);
-  User.belongsTo(School);
+    // 4. Apply constraints only in production (for SQLite, skip)
+    if (process.env.NODE_ENV === 'production') {
+      console.log('\n🔒 Applying database-level constraints...');
 
-  School.hasMany(Student);
-  Student.belongsTo(School);
+      // Mark unique constraint
+      await sequelize.query(`
+        ALTER TABLE "Marks" ADD CONSTRAINT IF NOT EXISTS mark_unique 
+        UNIQUE("studentId", "examId", "subjectId")
+      `).catch(err => {
+        if (!err.message.includes('already exists')) {
+          console.log('ℹ️  Mark unique constraint:', err.message.split('\n')[0]);
+        }
+      });
 
-  // Audit associations
-  AuditLog.belongsTo(User);
-  User.hasMany(AuditLog);
+      // Mark range check
+      await sequelize.query(`
+        ALTER TABLE "Marks" ADD CONSTRAINT IF NOT EXISTS mark_range_check
+        CHECK("marksObtained" >= 0 AND "marksObtained" <= 100)
+      `).catch(err => {
+        if (!err.message.includes('already exists')) {
+          console.log('ℹ️  Mark range check:', err.message.split('\n')[0]);
+        }
+      });
 
-  // Academic year associations
-  Student.belongsTo(AcademicYear);
-  AcademicYear.hasMany(Student);
+      // Enrollment unique constraint
+      await sequelize.query(`
+        ALTER TABLE "StudentSubjectEnrollments" ADD CONSTRAINT IF NOT EXISTS enrollment_unique
+        UNIQUE("studentId", "subjectId", "academicYearId", "classStreamId")
+      `).catch(err => {
+        if (!err.message.includes('already exists')) {
+          console.log('ℹ️  Enrollment unique constraint:', err.message.split('\n')[0]);
+        }
+      });
 
-  Student.belongsTo(ClassStream);
-  ClassStream.hasMany(Student);
+      console.log('✓ Database constraints applied');
 
-  Term.belongsTo(AcademicYear);
-  AcademicYear.hasMany(Term, { as: 'terms' });
+      // 5. Create indexes for performance
+      console.log('\n⚡ Creating database indexes...');
 
-  ClassStream.belongsTo(AcademicYear);
-  ClassStream.belongsTo(School);
+      const indexes = [
+        `CREATE INDEX IF NOT EXISTS idx_user_email ON "Users"("email")`,
+        `CREATE INDEX IF NOT EXISTS idx_student_school ON "Students"("schoolId")`,
+        `CREATE INDEX IF NOT EXISTS idx_attendance_student ON "Attendances"("studentId")`,
+        `CREATE INDEX IF NOT EXISTS idx_mark_exam ON "Marks"("examId")`,
+        `CREATE INDEX IF NOT EXISTS idx_payment_student ON "Payments"("studentId")`,
+        `CREATE INDEX IF NOT EXISTS idx_audit_user ON "AuditLogs"("userId")`,
+      ];
 
-  // Transfer associations
-  StudentTransfer.belongsTo(Student);
-  Student.hasMany(StudentTransfer);
+      for (const index of indexes) {
+        try {
+          await sequelize.query(index);
+        } catch (err) {
+          if (!err.message.includes('already exists')) {
+            console.log('ℹ️  Index creation info:', err.message.split('\n')[0]);
+          }
+        }
+      }
 
-  StudentTransfer.belongsTo(School, { as: 'fromSchool', foreignKey: 'fromSchoolId' });
-  StudentTransfer.belongsTo(School, { as: 'toSchool', foreignKey: 'toSchoolId' });
+      console.log('✓ Database indexes created');
+    }
 
-  // Discipline associations
-  DisciplineCase.belongsTo(Student);
-  Student.hasMany(DisciplineCase);
+    console.log('\n' + '='.repeat(50));
+    console.log('✅ Database initialization completed successfully!');
+    console.log('='.repeat(50) + '\n');
 
-  DisciplineCase.belongsTo(User, { as: 'reportedByUser', foreignKey: 'reportedBy' });
-  DisciplineCase.belongsTo(User, { as: 'handledByUser', foreignKey: 'handledBy' });
-
-  // Timetable associations
-  Timetable.belongsTo(ClassStream);
-  ClassStream.hasMany(Timetable);
-
-  Timetable.belongsTo(Term);
-  Term.hasMany(Timetable);
-
-  Timetable.belongsTo(Subject);
-  Subject.hasMany(Timetable);
-
-  Timetable.belongsTo(User, { as: 'teacher', foreignKey: 'teacherId' });
-
-  // Library associations
-  Book.belongsTo(School);
-  School.hasMany(Book);
-
-  BookIssue.belongsTo(Book, { as: 'book' });
-  Book.hasMany(BookIssue);
-
-  BookIssue.belongsTo(Student, { as: 'student' });
-  Student.hasMany(BookIssue);
-
-  BookIssue.belongsTo(User, { as: 'issuedByUser', foreignKey: 'issuedBy' });
-  BookIssue.belongsTo(User, { as: 'receivedByUser', foreignKey: 'receivedBy' });
-
-  // Subject enrollment associations
-  StudentSubjectEnrollment.belongsTo(Student);
-  Student.hasMany(StudentSubjectEnrollment);
-
-  StudentSubjectEnrollment.belongsTo(Subject, { as: 'subject' });
-  Subject.hasMany(StudentSubjectEnrollment);
+    process.exit(0);
+  } catch (error) {
+    console.error('\n❌ Database initialization failed:', error.message);
+    console.error('Stack:', error.stack);
+    process.exit(1);
+  }
 
   StudentSubjectEnrollment.belongsTo(ClassStream, { as: 'classStream' });
   ClassStream.hasMany(StudentSubjectEnrollment);
@@ -166,9 +166,10 @@ async function initializeDatabase() {
     setupAssociations();
     console.log('✓ Associations configured');
 
-    // 3. Sync database (skip for now - use manual migrations)
-    console.log('\n📊 Database schema ready (use direct Sequelize models)...');
-    console.log('✓ Models configured');
+      // 3. Sync database (create tables if not exist)
+      console.log('\n📊 Syncing database schema...');
+      await sequelize.sync({ alter: true });
+      console.log('✓ Models synced');
 
     // 4. Skip constraint application for SQLite (use production only)
     if (process.env.NODE_ENV === 'production') {
@@ -219,11 +220,13 @@ async function initializeDatabase() {
     ];
 
     for (const index of indexes) {
-      await sequelize.query(index).catch(err => {
+      try {
+        await sequelize.query(index);
+      } catch (err) {
         if (!err.message.includes('already exists')) {
           console.log('ℹ️  Index creation info:', err.message.split('\n')[0]);
         }
-      });
+      }
     }
     
     console.log('✓ Database indexes created');
