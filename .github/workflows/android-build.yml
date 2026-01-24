@@ -18,13 +18,15 @@ jobs:
           channel: stable
 
       - name: Install dependencies
+        working-directory: mobile
         run: flutter pub get
 
       - name: Build Android App Bundle
+        working-directory: mobile
         run: flutter build appbundle
 
       - name: Upload App Bundle
         uses: actions/upload-artifact@v4
         with:
           name: app-release
-          path: build/app/outputs/bundle/release/app-release.aab
+          path: mobile/build/app/outputs/bundle/release/app-release.aab
